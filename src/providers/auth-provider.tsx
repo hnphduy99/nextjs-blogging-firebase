@@ -1,30 +1,46 @@
 'use client';
 import { auth } from '@/firebase/firebase-config';
 import { onAuthStateChanged, User } from 'firebase/auth';
-import { createContext, useContext, useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { createContext, useContext, useEffect, useState, ReactNode, Dispatch, SetStateAction } from 'react';
 
-const AuthContext = createContext(null);
+interface AuthContextType {
+  user: User | null;
+  setUser: Dispatch<SetStateAction<User | null>>;
+}
 
-export function AuthProvider({ children, ...props }: { children: React.ReactNode }) {
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+interface AuthProviderProps {
+  children: ReactNode;
+}
+
+export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const value = { user, setUser };
+  const router = useRouter();
+  const pathname = usePathname();
+
   useEffect(() => {
-    onAuthStateChanged(auth, (user) => setUser(user));
-  }, [user]);
-  return (
-    <AuthContext.Provider value={value as any} {...props}>
-      {children}
-    </AuthContext.Provider>
-  );
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+
+      if (firebaseUser && pathname === '/sing-in') {
+        router.push('/');
+      }
+    });
+
+    return unsubscribe;
+  }, [router, pathname]);
+
+  const value: AuthContextType = { user, setUser };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within a AuthProvider');
-  }
-  if (!context) {
-    return { user: null, setUser: () => {} };
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 }
