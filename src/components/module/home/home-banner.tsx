@@ -1,8 +1,8 @@
-import { useRef } from 'react';
-import Autoplay from 'embla-carousel-autoplay';
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import Autoplay from 'embla-carousel-autoplay';
+import Link from 'next/link';
+import { useRef } from 'react';
 
 const ImageBanner = [
   {
@@ -40,14 +40,14 @@ const ImageBanner = [
 ];
 
 export default function HomeBanner() {
-  const carouselPlugin = useRef(Autoplay({ delay: 2000, stopOnInteraction: true }));
+  const carouselPlugin = useRef(Autoplay({ delay: 5000, stopOnInteraction: true }));
 
   return (
     <div className='banner-style mb-[60px] px-0 py-10'>
       <Carousel
         opts={{ loop: true }}
         plugins={[carouselPlugin.current]}
-        className='from-background to-foreground container flex h-full min-h-130 items-center bg-linear-to-tr'
+        className='from-background to-foreground container flex min-h-130 items-center bg-linear-to-tr'
         onMouseEnter={carouselPlugin.current.stop}
         onMouseLeave={carouselPlugin.current.reset}
       >
@@ -73,25 +73,5 @@ export default function HomeBanner() {
         <CarouselNext />
       </Carousel>
     </div>
-    // <div className='banner-style min-h-130 bg-linear-to-bl from-violet-500 to-fuchsia-500 px-0 py-10'>
-    //   <div className='container'>
-    //     <div className='banner flex items-center justify-between'>
-    //       <div className='banner-content color-white max-w-[400px]'>
-    //         <h1 className='banner-heading mb-5 text-4xl'>Heading</h1>
-    //         <p className='banner-desc mb-10 leading-[1.75]'>
-    //           Lorem ipsum dolor sit amet consectetur adipisicing elit. Quod id repudiandae in, perspiciatis impedit
-    //           nulla eligendi explicabo nemo ea soluta harum distinctio reprehenderit earum, ex fuga ducimus asperiores
-    //           eum iure.
-    //         </p>
-    //         <Link href='/'>
-    //           <Button size={'lg'}>Get Started</Button>
-    //         </Link>
-    //       </div>
-    //       <div className='banner-image'>
-    //         <img src='' alt='banner' />
-    //       </div>
-    //     </div>
-    //   </div>
-    // </div>
   );
 }

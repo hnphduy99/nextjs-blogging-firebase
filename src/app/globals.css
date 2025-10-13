@@ -127,3 +127,28 @@
   margin: 0 auto;
   padding: 0 20px;
 }
+
+.grid-layout {
+  @apply grid auto-cols-[235px] gap-5;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+  @media screen and (min-width: 1024px) {
+    @apply grid-cols-3 gap-12;
+  }
+  @media screen and (max-width: 1023.98px) {
+    @apply grid-flow-col overflow-x-auto;
+    scroll-snap-type: x mandatory;
+  }
+  & > * {
+    scroll-snap-align: start;
+  }
+  &--primary {
+    grid-auto-columns: 220px;
+    @media screen and (min-width: 1024px) {
+      @apply grid-cols-4;
+    }
+  }
+}
