@@ -1,5 +1,6 @@
 'use client';
 import Header from '@/components/layout/header';
+import HomeBanner from '@/components/module/home/home-banner';
 import { Button } from '@/components/ui/button';
 import { auth } from '@/firebase/firebase-config';
 import { signOut } from 'firebase/auth';
@@ -11,7 +12,7 @@ export default function Home() {
   return (
     <div>
       <Header></Header>
-      <Button onClick={handleSignOut}>Sign out</Button>
+      <HomeBanner></HomeBanner>
     </div>
   );
 }

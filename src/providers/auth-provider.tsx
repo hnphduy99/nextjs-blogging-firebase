@@ -24,7 +24,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setUser(firebaseUser);
 
-      if (firebaseUser && pathname === '/sing-in') {
+      if (firebaseUser && pathname === '/sign-in') {
         router.push('/');
       }
     });
