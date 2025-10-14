@@ -50,9 +50,7 @@ export default function Header() {
           </div>
           {!user ? (
             <Link href='/sign-up'>
-              <Button size='xl' className='header-button py-4'>
-                Sign up
-              </Button>
+              <Button className='header-button h-15 py-4'>Sign up</Button>
             </Link>
           ) : (
             <div className='header-auth'>

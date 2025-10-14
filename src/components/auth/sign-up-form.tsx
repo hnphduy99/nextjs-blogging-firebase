@@ -106,7 +106,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
               Sign in
             </Link>
           </div>
-          <Button disabled={isSubmitting} size='xl' type='submit' className='mx-auto block min-w-80 p-5'>
+          <Button disabled={isSubmitting} type='submit' className='mx-auto block h-15 min-w-80 p-5'>
             {isSubmitting ? (
               <div className='flex justify-center align-middle'>
                 <Spinner />
