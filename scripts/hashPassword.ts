@@ -1,6 +1,6 @@
-import bcrypt from "bcrypt";
+import bcrypt from 'bcrypt';
 
-const passwords = ["123456", "admin123", "user123"];
+const passwords = ['123456', 'admin123', 'user123'];
 
 async function main() {
   for (const pw of passwords) {

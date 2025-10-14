@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import Autoplay from 'embla-carousel-autoplay';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRef } from 'react';
 
@@ -64,7 +65,14 @@ export default function HomeBanner() {
                 </Link>
               </div>
               <div className='banner-image'>
-                <img src={item.image} alt={item.heading} />
+                <Image
+                  src={item.image}
+                  alt={item.heading}
+                  width={0}
+                  height={0}
+                  sizes='100vw'
+                  className='h-auto w-auto'
+                />
               </div>
             </CarouselItem>
           ))}

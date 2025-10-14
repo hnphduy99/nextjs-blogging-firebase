@@ -1,4 +1,5 @@
 import { Link } from 'lucide-react';
+import Image from 'next/image';
 
 interface PostImageProps {
   src: string;
@@ -12,13 +13,15 @@ export default function PostImage({ src = '', alt = '', className, href = '' }: 
     return (
       <Link href={`/${href}`} className='block'>
         <div className={className}>
-          <img src={src} alt={alt} loading='lazy' className={className} />
+          <Image width={300} height={300} src={src} alt={alt} loading='lazy' className={className} />
         </div>
       </Link>
     );
   return (
     <div className={className}>
-      <img
+      <Image
+        width={300}
+        height={300}
         src={src}
         alt={alt}
         loading='lazy'

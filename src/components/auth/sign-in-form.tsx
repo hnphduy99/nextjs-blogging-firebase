@@ -15,6 +15,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuth } from '@/providers/auth-provider';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const formSchema = z.object({
   email: z.email('Please enter valid email address').nonempty('Please enter your email address'),
@@ -48,12 +49,11 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
   };
   useEffect(() => {
     if (user) router.push('/');
-  }, [user]);
-  if (user) return;
+  }, [router, user]);
 
   return (
     <div className={cn('container', className)} {...props}>
-      <img srcSet='/nextjs.svg 2x' alt='Next Logo' className='mx-auto mb-5' />
+      <Image src='/nextjs.svg' width={90} height={90} alt='Next Logo' className='mx-auto mb-5' />
       <h1 className='text-primary mb-15 text-center text-[40px] font-bold'>Next Blogging</h1>
       <Form {...form}>
         <form className='mx-auto max-w-[800px] space-y-10' onSubmit={form.handleSubmit(onSubmit)} autoComplete='off'>

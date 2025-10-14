@@ -14,6 +14,7 @@ import { Spinner } from '../ui/spinner';
 import { useRouter } from 'next/navigation';
 import { addDoc, collection } from 'firebase/firestore';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const formSchema = z.object({
   fullname: z.string().nonempty('Please enter your fullname'),
@@ -57,7 +58,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
 
   return (
     <div className={cn('container', className)} {...props}>
-      <img srcSet='/nextjs.svg 2x' alt='Next Logo' className='mx-auto mb-5' />
+      <Image src='/nextjs.svg' width={90} height={90} alt='Next Logo' className='mx-auto mb-5' />
       <h1 className='text-primary mb-15 text-center text-[40px] font-bold'>Next Blogging</h1>
       <Form {...form}>
         <form className='mx-auto max-w-[800px] space-y-10' onSubmit={form.handleSubmit(onSubmit)} autoComplete='off'>

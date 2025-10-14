@@ -1,9 +1,8 @@
-import { Search } from 'lucide-react';
-import { Input } from '../ui/input';
-import { Button } from '../ui/button';
-import Link from 'next/link';
 import { useAuth } from '@/providers/auth-provider';
-import { User } from 'firebase/auth';
+import { Search } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '../ui/button';
 
 const menuLinks = [
   {
@@ -32,9 +31,9 @@ export default function Header() {
     <header className='px-0 py-10'>
       <div className='container'>
         <div className='flex items-center'>
-          <a href='/'>
-            <img srcSet='/nextjs.svg 2x' alt='nextjs blogging' className='block max-w-[50px]' />
-          </a>
+          <Link href='/'>
+            <Image src='/nextjs.svg' width={50} height={50} alt='nextjs blogging' className='block max-w-[50px]' />
+          </Link>
           <ul className='ml-10 flex items-center gap-5'>
             {menuLinks.map((link) => (
               <li key={link.title}>

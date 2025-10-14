@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 import { Input } from './input';
 import { Eye, EyeOff } from 'lucide-react';
 
-function InputPassword({ className, type, ref, ...props }: React.ComponentProps<'input'>) {
+function InputPassword({ className, ref, ...props }: React.ComponentProps<'input'>) {
   const [showPassword, setShowPassword] = React.useState(false);
   return (
     <div className='relative w-full'>

@@ -22,14 +22,13 @@ const eslintConfig = [
         'warn',
         {
           arrowParens: 'always',
-          semi: true,
           trailingComma: 'none',
           tabWidth: 2,
           endOfLine: 'auto',
           useTabs: false,
-          singleQuote: false,
+          singleQuote: true,
           printWidth: 120,
-          jsxSingleQuote: false,
+          jsxSingleQuote: true,
           plugins: ['prettier-plugin-tailwindcss']
         }
       ]

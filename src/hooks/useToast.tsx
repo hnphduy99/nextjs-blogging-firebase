@@ -1,6 +1,5 @@
 import { Check, CircleAlert, Info, X } from 'lucide-react';
 import { ExternalToast, toast } from 'sonner';
-import { useCallback } from 'react';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -67,10 +66,10 @@ function createToast(type: ToastType) {
 }
 
 export function useToast() {
-  const success = useCallback(createToast('success'), []);
-  const error = useCallback(createToast('error'), []);
-  const warning = useCallback(createToast('warning'), []);
-  const info = useCallback(createToast('info'), []);
+  const success = createToast('success');
+  const error = createToast('error');
+  const warning = createToast('warning');
+  const info = createToast('info');
 
   return { success, error, warning, info };
 }
