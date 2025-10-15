@@ -152,3 +152,7 @@
     }
   }
 }
+
+.form-layout {
+  @apply mb-5 grid grid-cols-1 lg:mb-10 lg:grid-cols-2 lg:gap-x-10;
+}
