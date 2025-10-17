@@ -21,9 +21,9 @@ export function AdminHeader() {
             width={0}
             height={0}
             loading='lazy'
-            sizes='100vw'
+            sizes='52px'
             className='h-full w-full rounded-full object-cover'
-            src={user?.photoURL || '/no-avatar.jpg'}
+            src={user?.photoURL || '/avatar-cat.svg'}
             alt='avatar'
           />
         </Link>

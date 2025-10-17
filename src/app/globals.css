@@ -156,3 +156,15 @@
 .form-layout {
   @apply mb-5 grid grid-cols-1 lg:mb-10 lg:grid-cols-2 lg:gap-x-10;
 }
+
+.hidden-input {
+  border: 0;
+  clip: rect(0 0 0 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  width: 1px;
+  white-space: nowrap;
+}

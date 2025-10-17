@@ -1,14 +1,19 @@
 'use client';
+import ImageUpload from '@/components/image/ImageUpload';
 import AdminHeading from '@/components/module/admin/admin-heading';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { slugify } from '@/lib/utils';
+import { extractPublicId, slugify } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
+import axios from 'axios';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '@/firebase/firebase-config';
+import { useState } from 'react';
 
 const status = [
   { id: 1, title: 'Approved' },
@@ -17,9 +22,9 @@ const status = [
 ];
 
 const category = [
-  { id: 1, title: 'Category 1' },
-  { id: 2, title: 'Category 2' },
-  { id: 3, title: 'Category 3' }
+  { id: '1', title: 'Category 1' },
+  { id: '2', title: 'Category 2' },
+  { id: '3', title: 'Category 3' }
 ];
 
 const formSchema = z.object({
@@ -27,10 +32,13 @@ const formSchema = z.object({
   slug: z.string().optional(),
   status: z.number('Status is required'),
   author: z.string().nonempty('Author is required'),
-  category: z.number('Category is required')
+  category: z.string().nonempty('Category is required'),
+  image: z.string(),
+  created_at: z.any()
 });
 
 export default function PostNew() {
+  const [isLoadingImage, setIsLoadingImage] = useState(false);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
@@ -39,13 +47,52 @@ export default function PostNew() {
       slug: '',
       status: 2,
       author: '',
-      category: undefined
+      category: '',
+      image: ''
     }
   });
+  const image = useWatch({ name: 'image', control: form.control });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    data.slug = slugify(data.slug || data.title);
-    console.log(data);
+    try {
+      data.slug = slugify(data.slug || data.title);
+      data.status = Number(data.status);
+      data.created_at = serverTimestamp() as object;
+      const colRef = collection(db, 'posts');
+      await addDoc(colRef, data);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const onSelectImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      setIsLoadingImage(true);
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await axios.post('/api/upload', formData);
+      form.setValue('image', res.data.url);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoadingImage(false);
+    }
+  };
+
+  const handleDeleteImage = async () => {
+    try {
+      setIsLoadingImage(true);
+      const publicId = extractPublicId(image);
+      if (!publicId) return;
+      await axios.delete(`/api/upload`, { data: { public_id: publicId } });
+      form.setValue('image', '');
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setIsLoadingImage(false);
+    }
   };
 
   return (
@@ -79,6 +126,15 @@ export default function PostNew() {
                   <FormMessage />
                 </FormItem>
               )}
+            />
+            <ImageUpload
+              disabled={isLoadingImage}
+              loading={isLoadingImage}
+              name='image'
+              handleDeleteImage={handleDeleteImage}
+              image={image}
+              onChange={onSelectImage}
+              className='h-[250px]'
             />
             <FormField
               control={form.control}
@@ -129,7 +185,7 @@ export default function PostNew() {
                 <FormItem className='flex flex-col items-start gap-y-5'>
                   <FormLabel htmlFor='Category'>Category</FormLabel>
                   <FormControl>
-                    <Select onValueChange={(val) => field.onChange(Number(val))} defaultValue={String(field.value)}>
+                    <Select defaultValue={String(field.value)} onValueChange={(val) => field.onChange(val)} {...field}>
                       <SelectTrigger className='!h-[60px] w-full'>
                         <SelectValue placeholder='Select a category' />
                       </SelectTrigger>
@@ -149,7 +205,7 @@ export default function PostNew() {
               )}
             />
           </div>
-          <Button type='submit' className='mx-auto block h-15 min-w-80 p-5'>
+          <Button disabled={form.formState.isSubmitting} type='submit' className='mx-auto block h-15 min-w-80 p-5'>
             Submit
           </Button>
         </form>
