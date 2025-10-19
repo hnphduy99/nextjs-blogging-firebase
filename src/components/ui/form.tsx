@@ -25,6 +25,10 @@ type FormFieldContextValue<
   name: TName;
 };
 
+type FormLabelProps = React.ComponentProps<typeof LabelPrimitive.Root> & {
+  required?: boolean;
+};
+
 const FormFieldContext = React.createContext<FormFieldContextValue>({} as FormFieldContextValue);
 
 const FormField = <
@@ -79,14 +83,18 @@ function FormItem({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function FormLabel({ className, ...props }: React.ComponentProps<typeof LabelPrimitive.Root>) {
+function FormLabel({ className, required, ...props }: FormLabelProps) {
   const { error, formItemId } = useFormField();
 
   return (
     <Label
       data-slot='form-label'
       data-error={!!error}
-      className={cn('data-[error=true]:text-destructive', className)}
+      className={cn(
+        'data-[error=true]:text-destructive gap-1',
+        required && 'after:text-destructive after:content-["*"]',
+        className
+      )}
       htmlFor={formItemId}
       {...props}
     />

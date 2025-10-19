@@ -1,0 +1,23 @@
+{
+  "asset_id": "d6139c7a88baf98cf936555b6c259684",
+  "public_id": "nextjs-blogging/upload/vtpwuecyrv7dzkgdqnw6",
+  "version": 1760565724,
+  "version_id": "0ddd5bc08c5fbc221e85ced333636afe",
+  "signature": "740df8f7598c93b722868219d5d927f4db46bda2",
+  "width": 2241,
+  "height": 1305,
+  "format": "png",
+  "resource_type": "image",
+  "created_at": "2025-10-15T22:02:04Z",
+  "tags": [],
+  "bytes": 1425970,
+  "type": "upload",
+  "etag": "9c93db046c8f148b43ff848c0f5cf26a",
+  "placeholder": false,
+  "url": "http://res.cloudinary.com/dn2y3fyv8/image/upload/v1760565724/nextjs-blogging/upload/vtpwuecyrv7dzkgdqnw6.png",
+  "secure_url": "https://res.cloudinary.com/dn2y3fyv8/image/upload/v1760565724/nextjs-blogging/upload/vtpwuecyrv7dzkgdqnw6.png",
+  "asset_folder": "nextjs-blogging/upload",
+  "display_name": "vtpwuecyrv7dzkgdqnw6",
+  "original_filename": "file",
+  "api_key": "928594435619196"
+}

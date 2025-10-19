@@ -2,18 +2,17 @@
 import ImageUpload from '@/components/image/ImageUpload';
 import AdminHeading from '@/components/module/admin/admin-heading';
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { extractPublicId, slugify } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
+import { extractPublicId } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import axios from 'axios';
+import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
-import axios from 'axios';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { db } from '@/firebase/firebase-config';
-import { useState } from 'react';
 
 const status = [
   { id: 1, title: 'Approved' },
@@ -22,19 +21,20 @@ const status = [
 ];
 
 const category = [
-  { id: '1', title: 'Category 1' },
-  { id: '2', title: 'Category 2' },
-  { id: '3', title: 'Category 3' }
+  { value: '1', label: 'Category 1' },
+  { value: '2', label: 'Category 2' },
+  { value: '3', label: 'Category 3' }
 ];
 
 const formSchema = z.object({
   title: z.string().nonempty('Title is required'),
   slug: z.string().optional(),
-  status: z.number('Status is required'),
+  status: z.number().optional(),
   author: z.string().nonempty('Author is required'),
   category: z.string().nonempty('Category is required'),
   image: z.string(),
-  created_at: z.any()
+  hot: z.boolean().optional(),
+  created_at: z.any().optional()
 });
 
 export default function PostNew() {
@@ -48,21 +48,24 @@ export default function PostNew() {
       status: 2,
       author: '',
       category: '',
-      image: ''
+      image: '',
+      hot: false
     }
   });
   const image = useWatch({ name: 'image', control: form.control });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    try {
-      data.slug = slugify(data.slug || data.title);
-      data.status = Number(data.status);
-      data.created_at = serverTimestamp() as object;
-      const colRef = collection(db, 'posts');
-      await addDoc(colRef, data);
-    } catch (error) {
-      console.log(error);
-    }
+    console.log('🚀 ~ onSubmit ~ data:', data);
+
+    // try {
+    //   data.slug = slugify(data.slug || data.title);
+    //   data.status = Number(data.status);
+    //   data.created_at = serverTimestamp() as object;
+    //   const colRef = collection(db, 'posts');
+    //   await addDoc(colRef, data);
+    // } catch (error) {
+    //   console.log(error);
+    // }
   };
 
   const onSelectImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +109,9 @@ export default function PostNew() {
               name='title'
               render={({ field }) => (
                 <FormItem className='flex flex-col items-start gap-y-5'>
-                  <FormLabel htmlFor='title'>Title</FormLabel>
+                  <FormLabel required htmlFor='title'>
+                    Title
+                  </FormLabel>
                   <FormControl>
                     <Input id='title' placeholder='Enter your title' {...field} />
                   </FormControl>
@@ -136,41 +141,63 @@ export default function PostNew() {
               onChange={onSelectImage}
               className='h-[250px]'
             />
-            <FormField
-              control={form.control}
-              name='status'
-              render={({ field }) => (
-                <FormItem className='flex flex-col items-start gap-y-5'>
-                  <FormLabel htmlFor='status'>Status</FormLabel>
-                  <FormControl>
-                    <RadioGroup
-                      onValueChange={(val) => field.onChange(Number(val))}
-                      defaultValue={String(field.value)}
-                      className='flex h-[60px] w-full'
-                    >
-                      {status.map((status) => (
-                        <div key={status.id} className='flex items-center space-x-2'>
-                          <RadioGroupItem value={String(status.id)} id={String(status.id)} />
-                          <FormLabel
-                            htmlFor={String(status.id)}
-                            className='text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                          >
-                            {status.title}
-                          </FormLabel>
-                        </div>
-                      ))}
-                    </RadioGroup>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className='flex flex-col justify-between'>
+              <FormField
+                control={form.control}
+                name='hot'
+                render={({ field }) => (
+                  <FormItem className='flex flex-col items-start gap-y-5'>
+                    <FormLabel htmlFor={field.name}>Hot</FormLabel>
+                    <FormControl>
+                      <Switch
+                        name={field.name}
+                        id={field.name}
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name='status'
+                render={({ field }) => (
+                  <FormItem className='flex flex-col items-start gap-y-5'>
+                    <FormLabel htmlFor='status'>Status</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={(val) => field.onChange(Number(val))}
+                        defaultValue={String(field.value)}
+                        className='flex h-[60px] w-full'
+                      >
+                        {status.map((status) => (
+                          <div key={status.id} className='flex items-center space-x-2'>
+                            <RadioGroupItem value={String(status.id)} id={String(status.id)} />
+                            <FormLabel
+                              htmlFor={String(status.id)}
+                              className='text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                            >
+                              {status.title}
+                            </FormLabel>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name='author'
               render={({ field }) => (
                 <FormItem className='flex flex-col items-start gap-y-5'>
-                  <FormLabel htmlFor='author'>Author</FormLabel>
+                  <FormLabel required htmlFor='author'>
+                    Author
+                  </FormLabel>
                   <FormControl>
                     <Input id='author' placeholder='Enter your author' {...field} />
                   </FormControl>
@@ -183,22 +210,17 @@ export default function PostNew() {
               name='category'
               render={({ field }) => (
                 <FormItem className='flex flex-col items-start gap-y-5'>
-                  <FormLabel htmlFor='Category'>Category</FormLabel>
+                  <FormLabel required htmlFor='Category'>
+                    Category
+                  </FormLabel>
                   <FormControl>
-                    <Select defaultValue={String(field.value)} onValueChange={(val) => field.onChange(val)} {...field}>
-                      <SelectTrigger className='!h-[60px] w-full'>
-                        <SelectValue placeholder='Select a category' />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectGroup>
-                          {category.map((category) => (
-                            <SelectItem key={category.id} value={String(category.id)}>
-                              {category.title}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      </SelectContent>
-                    </Select>
+                    <Combobox
+                      className='h-[60px]'
+                      options={category}
+                      value={field.value}
+                      onChange={field.onChange}
+                      placeholder='Chọn framework...'
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
