@@ -7,10 +7,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
-import { extractPublicId } from '@/lib/utils';
+import { db } from '@/firebase/firebase-config';
+import { extractPublicId, slugify } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
-import { useState } from 'react';
+import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 
@@ -39,6 +41,7 @@ const formSchema = z.object({
 
 export default function PostNew() {
   const [isLoadingImage, setIsLoadingImage] = useState(false);
+  const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
@@ -55,17 +58,15 @@ export default function PostNew() {
   const image = useWatch({ name: 'image', control: form.control });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    console.log('🚀 ~ onSubmit ~ data:', data);
-
-    // try {
-    //   data.slug = slugify(data.slug || data.title);
-    //   data.status = Number(data.status);
-    //   data.created_at = serverTimestamp() as object;
-    //   const colRef = collection(db, 'posts');
-    //   await addDoc(colRef, data);
-    // } catch (error) {
-    //   console.log(error);
-    // }
+    try {
+      data.slug = slugify(data.slug || data.title);
+      data.status = Number(data.status);
+      data.created_at = serverTimestamp() as object;
+      const colRef = collection(db, 'posts');
+      await addDoc(colRef, data);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
   const onSelectImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,6 +98,20 @@ export default function PostNew() {
       setIsLoadingImage(false);
     }
   };
+  const getData = async () => {
+    const colRef = collection(db, 'categories');
+    const q = query(colRef, where('status', '==', 1));
+    const querySnapshot = await getDocs(q);
+    const result: { value: string; label: string }[] = [];
+    querySnapshot.forEach((doc) => {
+      result.push({ value: doc.id, label: doc.data().name });
+    });
+    setCategories(result);
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
 
   return (
     <div>
@@ -216,7 +231,7 @@ export default function PostNew() {
                   <FormControl>
                     <Combobox
                       className='h-[60px]'
-                      options={category}
+                      options={categories}
                       value={field.value}
                       onChange={field.onChange}
                       placeholder='Chọn framework...'
