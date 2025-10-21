@@ -28,7 +28,7 @@ function getLastName(name: string | null) {
 export default function Header() {
   const { user } = useAuth();
   return (
-    <header className='px-0 py-10'>
+    <header className='bg-nav fixed z-100 w-full border-b-[0.03125rem] px-0 py-5 backdrop-blur-[1.25rem]'>
       <div className='container'>
         <div className='flex items-center'>
           <Link href='/'>
