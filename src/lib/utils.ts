@@ -29,7 +29,6 @@ export function slugify(str: string, options?: { separator?: string }) {
 export function extractPublicId(url: string) {
   try {
     const match = url.match(/upload\/(v\d+\/)?(.+?)\.[a-zA-Z0-9]+$/);
-    console.log('🚀 ~ extractPublicId ~ match:', match);
     if (!match) return '';
     return match[2]; // phần 2 là public_id không có extension
   } catch {

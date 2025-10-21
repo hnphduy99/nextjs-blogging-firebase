@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { db } from '@/firebase/firebase-config';
+import { useToast } from '@/hooks/useToast';
 import { extractPublicId, slugify } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
@@ -20,12 +21,6 @@ const status = [
   { id: 1, title: 'Approved' },
   { id: 2, title: 'Pending' },
   { id: 3, title: 'Reject' }
-];
-
-const category = [
-  { value: '1', label: 'Category 1' },
-  { value: '2', label: 'Category 2' },
-  { value: '3', label: 'Category 3' }
 ];
 
 const formSchema = z.object({
@@ -42,6 +37,7 @@ const formSchema = z.object({
 export default function PostNew() {
   const [isLoadingImage, setIsLoadingImage] = useState(false);
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
+  const toast = useToast();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     mode: 'onChange',
@@ -64,6 +60,8 @@ export default function PostNew() {
       data.created_at = serverTimestamp() as object;
       const colRef = collection(db, 'posts');
       await addDoc(colRef, data);
+      toast.success('Post created successfully.');
+      form.reset();
     } catch (error) {
       console.log(error);
     }

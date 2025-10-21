@@ -1,5 +1,5 @@
 import { Check, CircleAlert, Info, X } from 'lucide-react';
-import { ExternalToast, toast } from 'sonner';
+import { ExternalToast, toast as sonnerToast } from 'sonner';
 
 type ToastType = 'success' | 'error' | 'warning' | 'info';
 
@@ -57,7 +57,7 @@ function createToast(type: ToastType) {
       options = descriptionOrOptions;
     }
 
-    toast(message, {
+    sonnerToast(message, {
       description,
       ...baseStyles[type],
       ...options
@@ -71,5 +71,12 @@ export function useToast() {
   const warning = createToast('warning');
   const info = createToast('info');
 
-  return { success, error, warning, info };
+  const toast = {
+    success,
+    error,
+    warning,
+    info
+  };
+
+  return toast;
 }
