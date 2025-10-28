@@ -1,5 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import dayjs from 'dayjs';
+import { Timestamp } from 'firebase/firestore';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,3 +37,19 @@ export function extractPublicId(url: string) {
     return '';
   }
 }
+
+export const formatDateFirestore = (date: Timestamp | Date | null, format: string = 'DD/MM/YYYY'): string | null => {
+  if (!date) return null;
+
+  // Nếu là Timestamp của Firestore
+  if (date instanceof Timestamp) {
+    return dayjs(date.toDate()).format(format);
+  }
+
+  // Nếu là Date thông thường
+  if (date instanceof Date) {
+    return dayjs(date).format(format);
+  }
+
+  return null;
+};

@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 interface PostMetaProps {
   className?: string;
-  date: string;
+  date: string | null;
   author: string;
   href?: string;
 }

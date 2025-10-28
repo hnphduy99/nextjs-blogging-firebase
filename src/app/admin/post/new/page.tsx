@@ -7,34 +7,30 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
+import { postStatus } from '@/constants/post';
 import { db } from '@/firebase/firebase-config';
 import { useToast } from '@/hooks/useToast';
 import { extractPublicId, slugify } from '@/lib/utils';
+import { useAuth } from '@/providers/auth-provider';
 import { zodResolver } from '@hookform/resolvers/zod';
 import axios from 'axios';
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { z } from 'zod';
-
-const status = [
-  { id: 1, title: 'Approved' },
-  { id: 2, title: 'Pending' },
-  { id: 3, title: 'Reject' }
-];
+import { clone, z } from 'zod';
 
 const formSchema = z.object({
   title: z.string().nonempty('Title is required'),
   slug: z.string().optional(),
   status: z.number().optional(),
-  author: z.string().nonempty('Author is required'),
-  category: z.string().nonempty('Category is required'),
+  category_id: z.string().nonempty('Category is required'),
   image: z.string(),
   hot: z.boolean().optional(),
   created_at: z.any().optional()
 });
 
 export default function PostNew() {
+  const { user } = useAuth();
   const [isLoadingImage, setIsLoadingImage] = useState(false);
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
   const toast = useToast();
@@ -45,21 +41,24 @@ export default function PostNew() {
       title: '',
       slug: '',
       status: 2,
-      author: '',
-      category: '',
+      category_id: '',
       image: '',
       hot: false
     }
   });
   const image = useWatch({ name: 'image', control: form.control });
 
-  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+  const addPostHandler = async (data: z.infer<typeof formSchema>) => {
     try {
-      data.slug = slugify(data.slug || data.title);
-      data.status = Number(data.status);
-      data.created_at = serverTimestamp() as object;
+      const cloneData = { ...data };
+      cloneData.slug = slugify(data.slug || data.title);
+      cloneData.status = Number(data.status);
+      cloneData.created_at = serverTimestamp() as object;
       const colRef = collection(db, 'posts');
-      await addDoc(colRef, data);
+      await addDoc(colRef, {
+        ...cloneData,
+        user_id: user?.uid
+      });
       toast.success('Post created successfully.');
       form.reset();
     } catch (error) {
@@ -96,7 +95,7 @@ export default function PostNew() {
       setIsLoadingImage(false);
     }
   };
-  const getData = async () => {
+  const getCategories = async () => {
     const colRef = collection(db, 'categories');
     const q = query(colRef, where('status', '==', 1));
     const querySnapshot = await getDocs(q);
@@ -108,14 +107,14 @@ export default function PostNew() {
   };
 
   useEffect(() => {
-    getData();
+    getCategories();
   }, []);
 
   return (
     <div>
       <AdminHeading title='Add post' desc='Add new post' />
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(addPostHandler)}>
           <div className='form-layout space-y-10'>
             <FormField
               control={form.control}
@@ -145,82 +144,21 @@ export default function PostNew() {
                 </FormItem>
               )}
             />
-            <ImageUpload
-              disabled={isLoadingImage}
-              loading={isLoadingImage}
-              name='image'
-              handleDeleteImage={handleDeleteImage}
-              image={image}
-              onChange={onSelectImage}
-              className='h-[250px]'
-            />
-            <div className='flex flex-col justify-between'>
-              <FormField
-                control={form.control}
-                name='hot'
-                render={({ field }) => (
-                  <FormItem className='flex flex-col items-start gap-y-5'>
-                    <FormLabel htmlFor={field.name}>Hot</FormLabel>
-                    <FormControl>
-                      <Switch
-                        name={field.name}
-                        id={field.name}
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+            <FormItem className='flex flex-col items-start gap-y-5'>
+              <FormLabel htmlFor='Image'>Image</FormLabel>
+              <ImageUpload
+                disabled={isLoadingImage}
+                loading={isLoadingImage}
+                name='image'
+                handleDeleteImage={handleDeleteImage}
+                image={image}
+                onChange={onSelectImage}
+                className='h-[250px]'
               />
-              <FormField
-                control={form.control}
-                name='status'
-                render={({ field }) => (
-                  <FormItem className='flex flex-col items-start gap-y-5'>
-                    <FormLabel htmlFor='status'>Status</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={(val) => field.onChange(Number(val))}
-                        defaultValue={String(field.value)}
-                        className='flex h-[60px] w-full'
-                      >
-                        {status.map((status) => (
-                          <div key={status.id} className='flex items-center space-x-2'>
-                            <RadioGroupItem value={String(status.id)} id={String(status.id)} />
-                            <FormLabel
-                              htmlFor={String(status.id)}
-                              className='text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-                            >
-                              {status.title}
-                            </FormLabel>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            </FormItem>
             <FormField
               control={form.control}
-              name='author'
-              render={({ field }) => (
-                <FormItem className='flex flex-col items-start gap-y-5'>
-                  <FormLabel required htmlFor='author'>
-                    Author
-                  </FormLabel>
-                  <FormControl>
-                    <Input id='author' placeholder='Enter your author' {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name='category'
+              name='category_id'
               render={({ field }) => (
                 <FormItem className='flex flex-col items-start gap-y-5'>
                   <FormLabel required htmlFor='Category'>
@@ -232,8 +170,50 @@ export default function PostNew() {
                       options={categories}
                       value={field.value}
                       onChange={field.onChange}
-                      placeholder='Chọn framework...'
+                      placeholder='Select category'
                     />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='hot'
+              render={({ field }) => (
+                <FormItem className='flex flex-col items-start gap-y-5'>
+                  <FormLabel htmlFor={field.name}>Hot</FormLabel>
+                  <FormControl>
+                    <Switch name={field.name} id={field.name} checked={field.value} onCheckedChange={field.onChange} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='status'
+              render={({ field }) => (
+                <FormItem className='flex flex-col items-start gap-y-5'>
+                  <FormLabel htmlFor='status'>Status</FormLabel>
+                  <FormControl>
+                    <RadioGroup
+                      onValueChange={(val) => field.onChange(Number(val))}
+                      defaultValue={String(field.value)}
+                      className='flex h-[60px] w-full'
+                    >
+                      {postStatus.map((status) => (
+                        <div key={status.value} className='flex items-center space-x-2'>
+                          <RadioGroupItem value={String(status.value)} id={String(status.value)} />
+                          <FormLabel
+                            htmlFor={String(status.value)}
+                            className='text-sm peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                          >
+                            {status.label}
+                          </FormLabel>
+                        </div>
+                      ))}
+                    </RadioGroup>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

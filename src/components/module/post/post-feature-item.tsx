@@ -1,5 +1,6 @@
 import { db } from '@/firebase/firebase-config';
-import { ICategory, IPosts } from '@/interfaces/posts.interface';
+import { ICategory, IPosts, IUser } from '@/interfaces/posts.interface';
+import { formatDateFirestore } from '@/lib/utils';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import PostCategory from './post-category';
@@ -9,14 +10,28 @@ import PostTitle from './post-title';
 
 export default function PostFeatureItem({ data }: { data: IPosts }) {
   const [category, setCategory] = useState<ICategory>({} as ICategory);
+  const [user, setUser] = useState<IUser>({} as IUser);
   useEffect(() => {
     async function getCategory() {
-      const docRef = doc(db, 'categories', data.category!);
+      const docRef = doc(db, 'categories', data.category_id!);
       const docSnap = await getDoc(docRef);
+      if (!docSnap.data) return;
       setCategory(docSnap.data() as ICategory);
     }
     getCategory();
-  }, [data.category]);
+  }, [data.category_id]);
+
+  useEffect(() => {
+    async function getUser() {
+      const docRef = doc(db, 'users', data.user_id!);
+      const docSnap = await getDoc(docRef);
+      if (!docSnap.data) return;
+      setUser(docSnap.data() as IUser);
+    }
+    getUser();
+  }, [data.user_id]);
+
+  if (!data || !data.id) return null;
 
   return (
     <div className='post-feature-item relative h-[170px] w-full rounded-2xl lg:h-[270px]'>
@@ -24,10 +39,8 @@ export default function PostFeatureItem({ data }: { data: IPosts }) {
       <div className='post-overlay absolute inset-0 rounded-2xl bg-[rgba(0,0,0,0.75)] opacity-60 mix-blend-multiply' />
       <div className='post-content absolute inset-0 z-10 p-5 text-white max-lg:p-[15px]'>
         <div className='post-top mb-4 flex items-center justify-between'>
-          {category?.name && (
-            <PostCategory>{category.name.charAt(0).toUpperCase() + category.name.slice(1)}</PostCategory>
-          )}
-          <PostMeta date='01/01/2025' author={data.author} />
+          {category?.name && <PostCategory>{category.name}</PostCategory>}
+          <PostMeta date={formatDateFirestore(data.created_at, 'DD/MM/YYYY')} author={user.fullname} />
         </div>
         <PostTitle className='text-[22px] max-lg:text-base'>{data.title}</PostTitle>
       </div>
