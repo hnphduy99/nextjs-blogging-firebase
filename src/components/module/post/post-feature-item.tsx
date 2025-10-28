@@ -10,6 +10,7 @@ import PostTitle from './post-title';
 
 export default function PostFeatureItem({ data }: { data: IPosts }) {
   const [category, setCategory] = useState<ICategory>({} as ICategory);
+  console.log('🚀 ~ PostFeatureItem ~ category:', category);
   const [user, setUser] = useState<IUser>({} as IUser);
   useEffect(() => {
     async function getCategory() {
@@ -39,9 +40,9 @@ export default function PostFeatureItem({ data }: { data: IPosts }) {
       <div className='post-overlay absolute inset-0 rounded-2xl bg-[rgba(0,0,0,0.75)] opacity-60 mix-blend-multiply' />
       <div className='post-content absolute inset-0 z-10 p-5 text-white max-lg:p-[15px]'>
         <div className='post-top mb-4 flex items-center justify-between'>
-          {category?.name && <PostCategory href={category.slug}>{category.name}</PostCategory>}
+          {category?.category && <PostCategory href={category.slug}>{category.category}</PostCategory>}
           <PostMeta
-            href={slugify(user.fullname)}
+            href={slugify(user?.fullname || '')}
             date={formatDateFirestore(data.created_at, 'DD/MM/YYYY')}
             author={user.fullname}
           />

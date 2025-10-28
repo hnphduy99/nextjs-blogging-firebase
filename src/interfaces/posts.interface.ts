@@ -13,9 +13,11 @@ export interface IPosts {
 }
 
 export interface ICategory {
-  status: number;
-  name: string;
   slug: string;
+  user_id: string;
+  category: string;
+  created_at: Timestamp;
+  status: number;
 }
 
 export interface IUser {

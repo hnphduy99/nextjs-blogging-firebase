@@ -1,11 +1,15 @@
 'use client';
+import ActionDelete from '@/components/actions/ActionDelete';
+import ActionEdit from '@/components/actions/ActionEdit';
+import ActionView from '@/components/actions/ActionView';
+import Table from '@/components/table/Table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { categoryStatus } from '@/constants/post';
 import { db } from '@/firebase/firebase-config';
-import { formatDateFirestore } from '@/lib/utils';
-import { collection, limit, onSnapshot, query, Timestamp } from 'firebase/firestore';
+import { collection, deleteDoc, doc, limit, onSnapshot, query, Timestamp } from 'firebase/firestore';
 import { debounce } from 'lodash';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AdminHeading from '../admin/admin-heading';
 
@@ -36,22 +40,29 @@ export default function CategoryManage() {
       setCategories(result);
     });
   };
+  const router = useRouter();
 
   useEffect(() => {
     getCategories();
   }, []);
 
-  const headerTable = ['STT', 'Category', 'Slug', 'Status', 'Created At', 'Actions'];
-
   const handleInputFilter = debounce((e) => {
     setFilter(e.target.value);
   }, 500);
 
+  const handleDeleteCategory = async (id: string) => {
+    const colRef = doc(db, 'categories', id);
+    await deleteDoc(colRef);
+  };
+
   return (
     <div>
       <AdminHeading title='Categories' desc='Manage your category' />
-      <Button>Create category</Button>
-      <div className='mb-10 flex justify-end'>
+
+      <div className='mb-10 flex justify-between'>
+        <Button variant='outline' className='h-15' onClick={() => router.push('/admin/category/new')}>
+          Create category
+        </Button>
         <Input
           type='text'
           placeholder='Search category...'
@@ -60,26 +71,35 @@ export default function CategoryManage() {
         />
       </div>
       <Table>
-        <TableHeader>
-          <TableRow>
-            {headerTable.map((item, index) => (
-              <TableHead className='text-center' key={index}>
-                {item}
-              </TableHead>
+        <thead>
+          <tr>
+            <th>Id</th>
+            <th>Name</th>
+            <th>Slug</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {categories.length > 0 &&
+            categories.map((category) => (
+              <tr key={category.id}>
+                <td>{category.id}</td>
+                <td>{category.category}</td>
+                <td>
+                  <span className='text-gray-400 italic'>{category.slug}</span>
+                </td>
+                <td>{categoryStatus.find((item) => item.value === category.status)?.label}</td>
+                <td>
+                  <div className='flex items-center gap-x-3 text-gray-500'>
+                    <ActionView onClick={() => router.push(`/admin/category/${category.slug}`)} />
+                    <ActionEdit onClick={() => router.push(`/manage/update-category?id=${category.id}`)} />
+                    <ActionDelete onClick={() => handleDeleteCategory(category.id)} />
+                  </div>
+                </td>
+              </tr>
             ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {categories.map((category, index) => (
-            <TableRow key={category.id}>
-              <TableCell className='text-right'>{index + 1}</TableCell>
-              <TableCell>{category.category}</TableCell>
-              <TableCell>{category.slug}</TableCell>
-              <TableCell>{category.status}</TableCell>
-              <TableCell>{formatDateFirestore(category.created_at)}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
+        </tbody>
       </Table>
     </div>
   );
