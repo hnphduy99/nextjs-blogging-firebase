@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { auth, db } from '@/firebase/firebase-config';
 import { useToast } from '@/hooks/useToast';
-import { cn } from '@/lib/utils';
+import { cn, slugify } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
@@ -45,7 +45,8 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
           uid: user.user.uid,
           fullname: values.fullname,
           email: values.email,
-          password: values.password
+          password: values.password,
+          user_name: slugify(values.fullname)
         });
         success('Account created successfully.');
         router.push('/sign-in');
@@ -109,7 +110,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
           <Button disabled={isSubmitting} type='submit' className='mx-auto block h-15 min-w-80 p-5'>
             {isSubmitting ? (
               <div className='flex justify-center align-middle'>
-                <Spinner />
+                <Spinner className='h-5 w-5' />
                 &nbsp; Please wait...
               </div>
             ) : (

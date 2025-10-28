@@ -6,6 +6,7 @@ import { Combobox } from '@/components/ui/combobox';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Spinner } from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { postStatus } from '@/constants/post';
 import { db } from '@/firebase/firebase-config';
@@ -17,7 +18,7 @@ import axios from 'axios';
 import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
-import { clone, z } from 'zod';
+import { z } from 'zod';
 
 const formSchema = z.object({
   title: z.string().nonempty('Title is required'),
@@ -221,7 +222,14 @@ export default function PostNew() {
             />
           </div>
           <Button disabled={form.formState.isSubmitting} type='submit' className='mx-auto block h-15 min-w-80 p-5'>
-            Submit
+            {form.formState.isSubmitting ? (
+              <div className='flex justify-center align-middle'>
+                <Spinner className='h-5 w-5' />
+                &nbsp; Please wait...
+              </div>
+            ) : (
+              'Add post'
+            )}
           </Button>
         </form>
       </Form>

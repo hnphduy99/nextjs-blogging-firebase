@@ -92,7 +92,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<'div'>)
           <Button disabled={isSubmitting} type='submit' className='mx-auto block h-15 min-w-80 p-5'>
             {isSubmitting ? (
               <div className='flex justify-center align-middle'>
-                <Spinner />
+                <Spinner className='h-5 w-5' />
                 &nbsp; Please wait...
               </div>
             ) : (
