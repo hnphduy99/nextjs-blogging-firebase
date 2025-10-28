@@ -13,17 +13,17 @@ const sidebarLinks = [
   },
   {
     title: 'Post',
-    url: '/manage/posts',
+    url: '/admin/posts',
     icon: <BookOpen />
   },
   {
     title: 'Category',
-    url: '/manage/category',
+    url: '/admin/category',
     icon: <Archive />
   },
   {
     title: 'User',
-    url: '/manage/user',
+    url: '/admin/user',
     icon: <UsersRound />
   },
   {
@@ -36,7 +36,7 @@ const sidebarLinks = [
 
 export default function AdminSidebar() {
   return (
-    <div className='shadow-[10px 10px 20px rgba(218, 213, 213, 0.15)] w-[300px] rounded-xl bg-white max-lg:hidden'>
+    <div className='w-[300px] rounded-xl bg-white shadow-[10px_10px_20px_rgba(218,213,213,0.15)] max-lg:hidden'>
       {sidebarLinks.map((link) => {
         const menuItemStyle =
           'active:text-primary hover:text-primary mb-5 flex cursor-pointer items-center gap-5 px-5 py-3.5 font-medium text-[#808191] hover:bg-[#f1fbf7] active:bg-[#f1fbf7]';
