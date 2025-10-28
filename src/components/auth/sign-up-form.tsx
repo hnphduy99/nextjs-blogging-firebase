@@ -1,20 +1,20 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { auth, db } from '@/firebase/firebase-config';
+import { useToast } from '@/hooks/useToast';
 import { cn } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '../ui/form';
 import { InputPassword } from '../ui/input-password';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, db } from '@/firebase/firebase-config';
-import { useToast } from '@/hooks/useToast';
 import { Spinner } from '../ui/spinner';
-import { useRouter } from 'next/navigation';
-import { addDoc, collection } from 'firebase/firestore';
-import Link from 'next/link';
-import Image from 'next/image';
 
 const formSchema = z.object({
   fullname: z.string().nonempty('Please enter your fullname'),
@@ -41,8 +41,7 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
       const user = await createUserWithEmailAndPassword(auth, values.email, values.password);
       if (user) {
         await updateProfile(user.user, { displayName: values.fullname });
-        const colRef = collection(db, 'users');
-        await addDoc(colRef, {
+        await setDoc(doc(db, 'users', user.user.uid), {
           uid: user.user.uid,
           fullname: values.fullname,
           email: values.email,
