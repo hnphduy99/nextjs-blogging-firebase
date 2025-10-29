@@ -1,14 +1,36 @@
 'use client';
-import ActionDelete from '@/components/actions/ActionDelete';
 import ActionEdit from '@/components/actions/ActionEdit';
 import ActionView from '@/components/actions/ActionView';
 import Table from '@/components/table/Table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious
+} from '@/components/ui/pagination';
+import Popconfirm from '@/components/ui/popconfirm';
 import { categoryStatus } from '@/constants/post';
 import { db } from '@/firebase/firebase-config';
-import { collection, deleteDoc, doc, limit, onSnapshot, query, Timestamp } from 'firebase/firestore';
+import {
+  collection,
+  deleteDoc,
+  doc,
+  DocumentData,
+  endBefore,
+  getDocs,
+  limit,
+  limitToLast,
+  orderBy,
+  query,
+  QueryDocumentSnapshot,
+  startAfter,
+  where
+} from 'firebase/firestore';
 import { debounce } from 'lodash';
+import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import AdminHeading from '../admin/admin-heading';
@@ -17,50 +39,86 @@ interface ICategories {
   id: string;
   category: string;
   slug: string;
-  created_at: Timestamp;
+  created_at: any;
   user_id: string;
   status: number;
 }
 
 export default function CategoryManage() {
   const [categories, setCategories] = useState<ICategories[]>([]);
-  const [filter, setFilter] = useState(undefined);
-
-  const getCategories = async () => {
-    const colRef = collection(db, 'categories');
-    const q = query(colRef, limit(10));
-    onSnapshot(q, (querySnapshot) => {
-      const result: ICategories[] = [];
-      querySnapshot.forEach((doc) => {
-        result.push({
-          id: doc.id,
-          ...doc.data()
-        } as ICategories);
-      });
-      setCategories(result);
-    });
-  };
+  const [filter, setFilter] = useState<string | undefined>(undefined);
+  const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [firstDoc, setFirstDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
+  const [page, setPage] = useState(1);
+  const [isLastPage, setIsLastPage] = useState(false);
   const router = useRouter();
+
+  const PAGE_SIZE = 10;
+
+  const getCategories = async (direction: 'next' | 'prev' | 'init' = 'init') => {
+    const colRef = collection(db, 'categories');
+    let baseQuery = filter
+      ? query(
+          colRef,
+          where('category', '>=', filter),
+          where('category', '<=', filter + '\uf8ff'),
+          orderBy('category'),
+          limit(PAGE_SIZE)
+        )
+      : query(colRef, orderBy('category'), limit(PAGE_SIZE));
+
+    if (direction === 'next' && lastDoc) {
+      baseQuery = query(baseQuery, startAfter(lastDoc));
+    }
+    if (direction === 'prev' && firstDoc) {
+      baseQuery = query(baseQuery, endBefore(firstDoc), limitToLast(PAGE_SIZE));
+    }
+
+    const snapshot = await getDocs(baseQuery);
+    const docs = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data()
+    })) as ICategories[];
+
+    setCategories(docs);
+    setFirstDoc(snapshot.docs[0] || null);
+    setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
+    setIsLastPage(snapshot.docs.length < PAGE_SIZE);
+  };
 
   useEffect(() => {
     getCategories();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
 
-  const handleInputFilter = debounce((e) => {
+  const handleInputFilter = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value);
+    setPage(1);
   }, 500);
 
   const handleDeleteCategory = async (id: string) => {
     const colRef = doc(db, 'categories', id);
     await deleteDoc(colRef);
+    getCategories();
+  };
+
+  const handleNextPage = async () => {
+    if (isLastPage) return;
+    await getCategories('next');
+    setPage((p) => p + 1);
+  };
+
+  const handlePrevPage = async () => {
+    if (page === 1) return;
+    await getCategories('prev');
+    setPage((p) => p - 1);
   };
 
   return (
     <div>
       <AdminHeading title='Categories' desc='Manage your category' />
-
       <div className='mb-10 flex justify-between'>
-        <Button variant='outline' className='h-15' onClick={() => router.push('/admin/category/new')}>
+        <Button variant='outline' onClick={() => router.push('/admin/category/new')}>
           Create category
         </Button>
         <Input
@@ -70,6 +128,7 @@ export default function CategoryManage() {
           onChange={handleInputFilter}
         />
       </div>
+
       <Table>
         <thead>
           <tr>
@@ -81,7 +140,7 @@ export default function CategoryManage() {
           </tr>
         </thead>
         <tbody>
-          {categories.length > 0 &&
+          {categories.length > 0 ? (
             categories.map((category) => (
               <tr key={category.id}>
                 <td>{category.id}</td>
@@ -92,15 +151,53 @@ export default function CategoryManage() {
                 <td>{categoryStatus.find((item) => item.value === category.status)?.label}</td>
                 <td>
                   <div className='flex items-center gap-x-3 text-gray-500'>
+                    <Popconfirm
+                      title={`Delete category "${category.category}"?`}
+                      description='This action cannot be undone. Are you sure?'
+                      okText='Delete'
+                      cancelText='Cancel'
+                      okButtonVariant='destructive'
+                      onConfirm={() => handleDeleteCategory(category.id)}
+                    >
+                      <Button variant='outline' size='icon'>
+                        <Trash2 />
+                      </Button>
+                    </Popconfirm>
                     <ActionView onClick={() => router.push(`/admin/category/${category.slug}`)} />
-                    <ActionEdit onClick={() => router.push(`/manage/update-category?id=${category.id}`)} />
-                    <ActionDelete onClick={() => handleDeleteCategory(category.id)} />
+                    <ActionEdit onClick={() => router.push(`/admin/category/update?id=${category.id}`)} />
                   </div>
                 </td>
               </tr>
-            ))}
+            ))
+          ) : (
+            <tr>
+              <td colSpan={5} className='py-10 text-center text-gray-400'>
+                No categories found
+              </td>
+            </tr>
+          )}
         </tbody>
       </Table>
+
+      {/* Pagination controls */}
+      <div className='mt-6 flex justify-center'>
+        <Pagination>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                onClick={handlePrevPage}
+                className={page === 1 ? 'pointer-events-none opacity-50' : ''}
+              />
+            </PaginationItem>
+            <PaginationItem>
+              <span className='px-3 text-sm text-gray-500'>{page}</span>
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext onClick={handleNextPage} className={isLastPage ? 'pointer-events-none opacity-50' : ''} />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
+      </div>
     </div>
   );
 }

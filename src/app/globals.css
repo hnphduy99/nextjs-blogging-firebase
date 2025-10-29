@@ -41,6 +41,8 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --animate-popover-in: popover-in 0.2s ease-out;
+  --animate-popover-out: popover-out 0.15s ease-in;
 }
 
 :root {
@@ -167,4 +169,28 @@
   position: absolute;
   width: 1px;
   white-space: nowrap;
+}
+
+@layer animations {
+  @keyframes popover-in {
+    from {
+      opacity: 0;
+      transform: scale(0.95) translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  @keyframes popover-out {
+    from {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.95) translateY(-8px);
+    }
+  }
 }
