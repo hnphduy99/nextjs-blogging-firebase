@@ -12,8 +12,9 @@ import {
   PaginationPrevious
 } from '@/components/ui/pagination';
 import Popconfirm from '@/components/ui/popconfirm';
-import { categoryStatus } from '@/constants/post';
+import { postStatus } from '@/constants/post';
 import { db } from '@/firebase/firebase-config';
+import { IPosts } from '@/interfaces/posts.interface';
 import {
   collection,
   deleteDoc,
@@ -34,17 +35,10 @@ import { Trash2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-interface ICategories {
-  id: string;
-  category: string;
-  slug: string;
-  created_at: any;
-  user_id: string;
-  status: number;
-}
+const PAGE_SIZE = 10;
 
-export default function CategoryManage() {
-  const [categories, setCategories] = useState<ICategories[]>([]);
+export default function PostManage() {
+  const [posts, setPosts] = useState<IPosts[]>([]);
   const [filter, setFilter] = useState<string | undefined>(undefined);
   const [lastDoc, setLastDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
   const [firstDoc, setFirstDoc] = useState<QueryDocumentSnapshot<DocumentData> | null>(null);
@@ -52,19 +46,40 @@ export default function CategoryManage() {
   const [isLastPage, setIsLastPage] = useState(false);
   const router = useRouter();
 
-  const PAGE_SIZE = 10;
+  const handleInputFilter = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
+    setFilter(e.target.value);
+    setPage(1);
+  }, 500);
 
-  const getCategories = async (direction: 'next' | 'prev' | 'init' = 'init') => {
-    const colRef = collection(db, 'categories');
+  const handleDeletePost = async (id: string) => {
+    const colRef = doc(db, 'posts', id);
+    await deleteDoc(colRef);
+    getPosts();
+  };
+
+  const handleNextPage = async () => {
+    if (isLastPage) return;
+    await getPosts('next');
+    setPage((p) => p + 1);
+  };
+
+  const handlePrevPage = async () => {
+    if (page === 1) return;
+    await getPosts('prev');
+    setPage((p) => p - 1);
+  };
+
+  const getPosts = async (direction: 'next' | 'prev' | 'init' = 'init') => {
+    const colRef = collection(db, 'posts');
     let baseQuery = filter
       ? query(
           colRef,
-          where('category', '>=', filter),
-          where('category', '<=', filter + '\uf8ff'),
-          orderBy('category'),
+          where('title', '>=', filter),
+          where('title', '<=', filter + '\uf8ff'),
+          orderBy('title'),
           limit(PAGE_SIZE)
         )
-      : query(colRef, orderBy('category'), limit(PAGE_SIZE));
+      : query(colRef, orderBy('title'), limit(PAGE_SIZE));
 
     if (direction === 'next' && lastDoc) {
       baseQuery = query(baseQuery, startAfter(lastDoc));
@@ -77,51 +92,28 @@ export default function CategoryManage() {
     const docs = snapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data()
-    })) as ICategories[];
+    })) as IPosts[];
 
-    setCategories(docs);
+    setPosts(docs);
     setFirstDoc(snapshot.docs[0] || null);
     setLastDoc(snapshot.docs[snapshot.docs.length - 1] || null);
     setIsLastPage(snapshot.docs.length < PAGE_SIZE);
   };
 
   useEffect(() => {
-    getCategories();
+    getPosts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
-
-  const handleInputFilter = debounce((e: React.ChangeEvent<HTMLInputElement>) => {
-    setFilter(e.target.value);
-    setPage(1);
-  }, 500);
-
-  const handleDeleteCategory = async (id: string) => {
-    const colRef = doc(db, 'categories', id);
-    await deleteDoc(colRef);
-    getCategories();
-  };
-
-  const handleNextPage = async () => {
-    if (isLastPage) return;
-    await getCategories('next');
-    setPage((p) => p + 1);
-  };
-
-  const handlePrevPage = async () => {
-    if (page === 1) return;
-    await getCategories('prev');
-    setPage((p) => p - 1);
-  };
 
   return (
     <div>
       <div className='mb-10 flex justify-between'>
-        <Button variant='outline' onClick={() => router.push('/admin/category/new')}>
-          Create category
+        <Button variant='outline' onClick={() => router.push('/admin/post/new')}>
+          Create post
         </Button>
         <Input
           type='text'
-          placeholder='Search category...'
+          placeholder='Search post...'
           className='w-80 rounded-lg border border-gray-300 px-5 py-4 outline-none'
           onChange={handleInputFilter}
         />
@@ -134,35 +126,35 @@ export default function CategoryManage() {
             <th>Name</th>
             <th>Slug</th>
             <th>Status</th>
-            <th>Actions</th>
+            <th className='fixed'>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {categories.length > 0 ? (
-            categories.map((category) => (
-              <tr key={category.id}>
-                <td>{category.id}</td>
-                <td>{category.category}</td>
+          {posts.length > 0 ? (
+            posts.map((post) => (
+              <tr key={post.id}>
+                <td>{post.id}</td>
+                <td>{post.title}</td>
                 <td>
-                  <span className='text-gray-400 italic'>{category.slug}</span>
+                  <span className='text-gray-400 italic'>{post.slug}</span>
                 </td>
-                <td>{categoryStatus.find((item) => item.value === category.status)?.label}</td>
+                <td>{postStatus.find((item) => item.value === post.status)?.label}</td>
                 <td>
                   <div className='flex items-center gap-x-3 text-gray-500'>
                     <Popconfirm
-                      title={`Delete category "${category.category}"?`}
+                      title={`Delete post "${post.title}"?`}
                       description='This action cannot be undone. Are you sure?'
                       okText='Delete'
                       cancelText='Cancel'
                       okButtonVariant='destructive'
-                      onConfirm={() => handleDeleteCategory(category.id)}
+                      onConfirm={() => handleDeletePost(post.id)}
                     >
                       <Button variant='outline' size='icon'>
                         <Trash2 />
                       </Button>
                     </Popconfirm>
-                    <ActionView onClick={() => router.push(`/admin/category/${category.slug}`)} />
-                    <ActionEdit onClick={() => router.push(`/admin/category/update?id=${category.id}`)} />
+                    <ActionView onClick={() => router.push(`/admin/post/${post.slug}`)} />
+                    <ActionEdit onClick={() => router.push(`/admin/post/update?id=${post.id}`)} />
                   </div>
                 </td>
               </tr>
@@ -170,7 +162,7 @@ export default function CategoryManage() {
           ) : (
             <tr>
               <td colSpan={5} className='py-10 text-center text-gray-400'>
-                No categories found
+                No post found
               </td>
             </tr>
           )}

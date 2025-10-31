@@ -13,7 +13,7 @@ const sidebarLinks = [
   },
   {
     title: 'Post',
-    url: '/admin/posts',
+    url: '/admin/post',
     icon: <BookOpen />
   },
   {

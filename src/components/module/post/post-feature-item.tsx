@@ -10,8 +10,8 @@ import PostTitle from './post-title';
 
 export default function PostFeatureItem({ data }: { data: IPosts }) {
   const [category, setCategory] = useState<ICategory>({} as ICategory);
-  console.log('🚀 ~ PostFeatureItem ~ category:', category);
   const [user, setUser] = useState<IUser>({} as IUser);
+
   useEffect(() => {
     async function getCategory() {
       const docRef = doc(db, 'categories', data.category_id!);
