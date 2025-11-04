@@ -36,7 +36,7 @@ import { useEffect, useState } from 'react';
 
 interface ICategories {
   id: string;
-  category: string;
+  name: string;
   slug: string;
   created_at: any;
   user_id: string;
@@ -59,12 +59,12 @@ export default function CategoryManage() {
     let baseQuery = filter
       ? query(
           colRef,
-          where('category', '>=', filter),
-          where('category', '<=', filter + '\uf8ff'),
-          orderBy('category'),
+          where('name', '>=', filter),
+          where('name', '<=', filter + '\uf8ff'),
+          orderBy('name'),
           limit(PAGE_SIZE)
         )
-      : query(colRef, orderBy('category'), limit(PAGE_SIZE));
+      : query(colRef, orderBy('name'), limit(PAGE_SIZE));
 
     if (direction === 'next' && lastDoc) {
       baseQuery = query(baseQuery, startAfter(lastDoc));
@@ -142,7 +142,7 @@ export default function CategoryManage() {
             categories.map((category) => (
               <tr key={category.id}>
                 <td>{category.id}</td>
-                <td>{category.category}</td>
+                <td>{category.name}</td>
                 <td>
                   <span className='text-gray-400 italic'>{category.slug}</span>
                 </td>
@@ -150,7 +150,7 @@ export default function CategoryManage() {
                 <td>
                   <div className='flex items-center gap-x-3 text-gray-500'>
                     <Popconfirm
-                      title={`Delete category "${category.category}"?`}
+                      title={`Delete category "${category.name}"?`}
                       description='This action cannot be undone. Are you sure?'
                       okText='Delete'
                       cancelText='Cancel'

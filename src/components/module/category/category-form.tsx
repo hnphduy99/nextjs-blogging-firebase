@@ -5,29 +5,62 @@ import { Input } from '@/components/ui/input';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Spinner } from '@/components/ui/spinner';
 import { categoryStatus } from '@/constants/post';
-import { UseFormReturn, FieldValues, Path } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { serverTimestamp } from 'firebase/firestore';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-interface CategoryFormProps<T extends FieldValues> {
-  form: UseFormReturn<T>;
-  submit: (values: T) => void | Promise<void>;
-  nameSubmitButton: string;
-}
+export const categoryFormSchema = z.object({
+  name: z.string().nonempty('Name is required'),
+  slug: z.string().optional(),
+  status: z.number().optional(),
+  created_at: z.any().optional()
+});
 
-export default function CategoryForm<T extends FieldValues>({ form, submit, nameSubmitButton }: CategoryFormProps<T>) {
+type CategoryFormProps = {
+  onSubmit: (data: z.infer<typeof categoryFormSchema>) => Promise<void> | void;
+  defaultValues?: Partial<z.infer<typeof categoryFormSchema>>;
+  isSubmitting?: boolean;
+  submitLabel?: string;
+};
+
+export default function CategoryForm({
+  onSubmit,
+  defaultValues,
+  isSubmitting,
+  submitLabel = 'Save category'
+}: CategoryFormProps) {
+  const form = useForm<z.infer<typeof categoryFormSchema>>({
+    resolver: zodResolver(categoryFormSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      slug: '',
+      status: 1,
+      created_at: serverTimestamp(),
+      ...defaultValues
+    }
+  });
+
+  const handleSubmit = async (data: z.infer<typeof categoryFormSchema>) => {
+    await onSubmit(data);
+    form.reset();
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(submit)}>
+      <form onSubmit={form.handleSubmit(handleSubmit)}>
         <div className='form-layout space-y-10'>
           <FormField
             control={form.control}
-            name={'category' as Path<T>}
+            name={'name'}
             render={({ field }) => (
               <FormItem className='flex flex-col items-start gap-y-5'>
-                <FormLabel required htmlFor='category'>
-                  Category
+                <FormLabel required htmlFor='name'>
+                  Name
                 </FormLabel>
                 <FormControl>
-                  <Input id='category' placeholder='Enter your category' {...field} />
+                  <Input id='name' placeholder='Enter your name' {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -36,7 +69,7 @@ export default function CategoryForm<T extends FieldValues>({ form, submit, name
 
           <FormField
             control={form.control}
-            name={'slug' as Path<T>}
+            name={'slug'}
             render={({ field }) => (
               <FormItem className='flex flex-col items-start gap-y-5'>
                 <FormLabel htmlFor='slug'>Slug</FormLabel>
@@ -50,7 +83,7 @@ export default function CategoryForm<T extends FieldValues>({ form, submit, name
 
           <FormField
             control={form.control}
-            name={'status' as Path<T>}
+            name={'status'}
             render={({ field }) => (
               <FormItem className='flex flex-col items-start gap-y-5'>
                 <FormLabel htmlFor='status'>Status</FormLabel>
@@ -79,14 +112,14 @@ export default function CategoryForm<T extends FieldValues>({ form, submit, name
           />
         </div>
 
-        <Button disabled={form.formState.isSubmitting} type='submit' className='mx-auto block h-15 min-w-80 p-5'>
-          {form.formState.isSubmitting ? (
+        <Button disabled={isSubmitting} type='submit' className='mx-auto block h-15 min-w-80 p-5'>
+          {isSubmitting ? (
             <div className='flex justify-center align-middle'>
               <Spinner className='h-5 w-5' />
               &nbsp; Please wait...
             </div>
           ) : (
-            nameSubmitButton
+            submitLabel
           )}
         </Button>
       </form>

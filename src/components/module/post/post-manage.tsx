@@ -15,6 +15,7 @@ import Popconfirm from '@/components/ui/popconfirm';
 import { postStatus } from '@/constants/post';
 import { db } from '@/firebase/firebase-config';
 import { IPosts } from '@/interfaces/posts.interface';
+import { formatDateFirestore } from '@/lib/utils';
 import {
   collection,
   deleteDoc,
@@ -126,7 +127,8 @@ export default function PostManage() {
             <th>Name</th>
             <th>Slug</th>
             <th>Status</th>
-            <th className='fixed'>Actions</th>
+            <th>Created</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -139,6 +141,7 @@ export default function PostManage() {
                   <span className='text-gray-400 italic'>{post.slug}</span>
                 </td>
                 <td>{postStatus.find((item) => item.value === post.status)?.label}</td>
+                <td>{formatDateFirestore(post.created_at, 'DD/MM/YYYY')}</td>
                 <td>
                   <div className='flex items-center gap-x-3 text-gray-500'>
                     <Popconfirm

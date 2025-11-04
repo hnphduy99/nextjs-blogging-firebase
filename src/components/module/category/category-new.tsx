@@ -3,49 +3,34 @@ import { db } from '@/firebase/firebase-config';
 import { useToast } from '@/hooks/useToast';
 import { slugify } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
-import { zodResolver } from '@hookform/resolvers/zod';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { useForm } from 'react-hook-form';
+import { useState } from 'react';
 import { z } from 'zod';
-import CategoryForm from './category-form';
-
-const formSchema = z.object({
-  category: z.string().nonempty('Category is required'),
-  slug: z.string().optional(),
-  status: z.number().optional(),
-  created_at: z.any().optional()
-});
+import CategoryForm, { categoryFormSchema } from './category-form';
 
 export default function CategoryNew() {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    mode: 'onChange',
-    defaultValues: {
-      category: '',
-      slug: '',
-      status: 1,
-      created_at: serverTimestamp()
-    }
-  });
   const toast = useToast();
   const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-  const addCategoryHandler = async (data: z.infer<typeof formSchema>) => {
+  const addCategoryHandler = async (data: z.infer<typeof categoryFormSchema>) => {
     try {
-      const cloneData = { ...data };
-      cloneData.slug = slugify(data.slug || data.category);
-      cloneData.status = Number(data.status);
-      const colRef = collection(db, 'categories');
-      await addDoc(colRef, {
-        ...cloneData,
+      setLoading(true);
+      const cloneData = {
+        ...data,
+        slug: slugify(data.slug || data.name),
+        created_at: serverTimestamp(),
         user_id: user?.uid
-      });
+      };
+      const colRef = collection(db, 'categories');
+      await addDoc(colRef, cloneData);
       toast.success('Category created successfully.');
-      form.reset();
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  return <CategoryForm nameSubmitButton='Add category' form={form} submit={addCategoryHandler} />;
+  return <CategoryForm isSubmitting={loading} submitLabel='Add category' onSubmit={addCategoryHandler} />;
 }

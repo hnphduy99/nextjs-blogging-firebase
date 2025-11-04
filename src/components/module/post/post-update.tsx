@@ -1,33 +1,38 @@
 'use client';
 import { db } from '@/firebase/firebase-config';
 import { useToast } from '@/hooks/useToast';
+import { IPosts } from '@/interfaces/posts.interface';
 import { slugify } from '@/lib/utils';
 import { useAuth } from '@/providers/auth-provider';
-import { addDoc, collection, getDocs, query, serverTimestamp, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { z } from 'zod';
 import PostForm, { postFormSchema } from './post-form';
 
-export default function PostNew() {
+export default function PostUpdate({ postId }: { postId: string }) {
   const { user } = useAuth();
-  const toast = useToast();
   const [categories, setCategories] = useState<{ value: string; label: string }[]>([]);
+  const toast = useToast();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [post, setPost] = useState<IPosts>();
 
-  const addPostHandler = async (data: z.infer<typeof postFormSchema>) => {
+  const updatePostHandler = async (data: z.infer<typeof postFormSchema>) => {
     try {
       setLoading(true);
       const cloneData = {
         ...data,
+        updated_at: serverTimestamp(),
         slug: slugify(data.slug || data.title),
-        created_at: serverTimestamp(),
         user_id: user?.uid
       };
-      const colRef = collection(db, 'posts');
-      await addDoc(colRef, cloneData);
+      const colRef = doc(db, 'posts', postId!);
+      await updateDoc(colRef, cloneData);
       toast.success('Post created successfully.');
-    } catch (error: any) {
-      toast.error('Failed to create post.', error.message);
+      router.back();
+    } catch (error) {
+      console.log(error);
     } finally {
       setLoading(false);
     }
@@ -48,5 +53,24 @@ export default function PostNew() {
     getCategories();
   }, []);
 
-  return <PostForm onSubmit={addPostHandler} categories={categories} isSubmitting={loading} submitLabel='Add post' />;
+  useEffect(() => {
+    async function fetchData() {
+      const colRef = doc(db, 'posts', postId);
+      const singleDoc = await getDoc(colRef);
+      setPost(singleDoc.data() as IPosts);
+    }
+    fetchData();
+  }, [postId]);
+
+  if (!post) return <div>Loading...</div>;
+
+  return (
+    <PostForm
+      onSubmit={updatePostHandler}
+      categories={categories}
+      isSubmitting={loading}
+      submitLabel='Update post'
+      defaultValues={post}
+    />
+  );
 }

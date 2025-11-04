@@ -1,3 +1,4 @@
+import AdminHeading from '@/components/module/admin/admin-heading';
 import PostNew from '@/components/module/post/post-new';
 import { Metadata } from 'next';
 import React from 'react';
@@ -7,5 +8,10 @@ export const metadata: Metadata = {
 };
 
 export default function PostAddNewPage() {
-  return <PostNew />;
+  return (
+    <>
+      <AdminHeading title='Add post' desc='Add new post' />
+      <PostNew />
+    </>
+  );
 }

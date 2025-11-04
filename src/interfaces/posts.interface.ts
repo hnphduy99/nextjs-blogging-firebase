@@ -15,7 +15,7 @@ export interface IPosts {
 export interface ICategory {
   slug: string;
   user_id: string;
-  category: string;
+  name: string;
   created_at: Timestamp;
   status: number;
 }

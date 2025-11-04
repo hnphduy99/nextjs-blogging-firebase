@@ -1,63 +1,52 @@
 'use client';
 import { db } from '@/firebase/firebase-config';
 import { useToast } from '@/hooks/useToast';
+import { ICategory } from '@/interfaces/posts.interface';
 import { slugify } from '@/lib/utils';
-import { zodResolver } from '@hookform/resolvers/zod';
+import { useAuth } from '@/providers/auth-provider';
 import { doc, getDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
 import { z } from 'zod';
-import CategoryForm from './category-form';
-
-const formSchema = z.object({
-  category: z.string().nonempty('Category is required'),
-  slug: z.string().optional(),
-  status: z.number().optional(),
-  created_at: z.any().optional()
-});
+import CategoryForm, { categoryFormSchema } from './category-form';
 
 export default function CategoryUpdate({ categoryId }: { categoryId: string }) {
+  const { user } = useAuth();
   const toast = useToast();
   const router = useRouter();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    mode: 'onChange',
-    defaultValues: {
-      category: '',
-      slug: '',
-      status: undefined,
-      created_at: undefined
-    }
-  });
+  const [loading, setLoading] = useState(false);
+  const [category, setCategory] = useState<ICategory>();
 
   useEffect(() => {
     async function fetchData() {
       const colRef = doc(db, 'categories', categoryId!);
       const singleDoc = await getDoc(colRef);
-      form.reset(singleDoc.data());
+      setCategory(singleDoc.data() as ICategory);
     }
     fetchData();
-  }, [categoryId, form]);
+  }, [categoryId]);
 
-  const updateCategoryHandler = async (data: z.infer<typeof formSchema>) => {
+  const updateCategoryHandler = async (data: z.infer<typeof categoryFormSchema>) => {
     try {
-      const cloneData = { ...data };
-      cloneData.slug = slugify(data.slug || data.category);
-      cloneData.status = Number(data.status);
+      setLoading(true);
+      const cloneData = {
+        ...data,
+        slug: slugify(data.slug || data.name),
+        updated_at: serverTimestamp(),
+        user_id: user?.uid
+      };
       const colRef = doc(db, 'categories', categoryId!);
-      await updateDoc(colRef, {
-        ...cloneData,
-        updated_at: serverTimestamp()
-      });
+      await updateDoc(colRef, cloneData);
       toast.success('Category updated successfully.');
       router.back();
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false);
     }
   };
-  if (!categoryId) return null;
 
-  return <CategoryForm nameSubmitButton='Update category' form={form} submit={updateCategoryHandler} />;
+  if (!category) return <div>Loading...</div>;
+
+  return <CategoryForm isSubmitting={loading} submitLabel='Update category' onSubmit={updateCategoryHandler} />;
 }
