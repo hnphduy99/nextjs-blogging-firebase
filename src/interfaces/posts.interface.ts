@@ -21,8 +21,8 @@ export interface ICategory {
 }
 
 export interface IUser {
+  id: string;
+  fullname: string;
   email: string;
   password: string;
-  uid: string;
-  fullname: string;
 }
