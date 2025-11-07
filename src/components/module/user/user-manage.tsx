@@ -1,6 +1,7 @@
 'use client';
 import ActionEdit from '@/components/actions/ActionEdit';
 import ActionView from '@/components/actions/ActionView';
+import LabelStatus from '@/components/labelStatus/LabelStatus';
 import Table from '@/components/table/Table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,8 +13,10 @@ import {
   PaginationPrevious
 } from '@/components/ui/pagination';
 import Popconfirm from '@/components/ui/popconfirm';
+import { userRole, userStatus } from '@/constants/constants';
 import { db } from '@/firebase/firebase-config';
-import { IUser } from '@/interfaces/posts.interface';
+import { IUser } from '@/interfaces/user.inteface';
+import { formatDateFirestore } from '@/lib/utils';
 import {
   collection,
   deleteDoc,
@@ -31,6 +34,7 @@ import {
 } from 'firebase/firestore';
 import { debounce } from 'lodash';
 import { Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -104,6 +108,34 @@ export default function UserManage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filter]);
 
+  const renderLabelStatus = (status: number) => {
+    switch (status) {
+      case userStatus.ACTIVE:
+        return <LabelStatus type='success'>Active</LabelStatus>;
+      case userStatus.PENDING:
+        return <LabelStatus type='warning'>Pending</LabelStatus>;
+      case userStatus.BAN:
+        return <LabelStatus type='danger'>Rejected</LabelStatus>;
+
+      default:
+        break;
+    }
+  };
+
+  const renderRoleLabel = (role: number) => {
+    switch (role) {
+      case userRole.ADMIN:
+        return 'Admin';
+      case userRole.MOD:
+        return 'Moderator';
+      case userRole.USER:
+        return 'User';
+
+      default:
+        break;
+    }
+  };
+
   return (
     <div>
       <div className='mb-10 flex justify-between'>
@@ -122,8 +154,11 @@ export default function UserManage() {
         <thead>
           <tr>
             <th>Id</th>
-            <th>Fullname</th>
-            <th>Email</th>
+            <th>Info</th>
+            <th>Username</th>
+            <th>Email address</th>
+            <th>Status</th>
+            <th>Role</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -131,11 +166,28 @@ export default function UserManage() {
           {users.length > 0 ? (
             users.map((user) => (
               <tr key={user.id}>
-                <td>{user.id}</td>
-                <td>{user.fullname}</td>
-                <td>
-                  <span className='text-gray-400 italic'>{user.email}</span>
+                <td title={user.id}>{user.id.slice(0, 5) + '...'}</td>
+                <td className='whitespace-nowrap'>
+                  <div className='flex items-center gap-x-3'>
+                    <div className='relative h-10 w-10'>
+                      <Image
+                        src={user?.avatar || '/file.svg'}
+                        alt={user?.fullname || 'Avatar'}
+                        fill
+                        className='rounded-md object-cover'
+                        sizes='40px'
+                      />
+                    </div>
+                    <div className='flex-1'>
+                      <h3>{user?.fullname}</h3>
+                      <time className='text-sm text-gray-300'>{formatDateFirestore(user?.created_at)}</time>
+                    </div>
+                  </div>
                 </td>
+                <td>{user?.user_name}</td>
+                <td>{user?.email.slice(0, 5) + '...'}</td>
+                <td>{renderLabelStatus(user.status)}</td>
+                <td>{renderRoleLabel(user.role)}</td>
                 <td>
                   <div className='flex items-center gap-x-3 text-gray-500'>
                     <Popconfirm

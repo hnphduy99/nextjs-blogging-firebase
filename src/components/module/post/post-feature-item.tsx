@@ -1,5 +1,5 @@
 import { db } from '@/firebase/firebase-config';
-import { ICategory, IPosts, IUser } from '@/interfaces/posts.interface';
+import { ICategory, IPosts } from '@/interfaces/posts.interface';
 import { formatDateFirestore, slugify } from '@/lib/utils';
 import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
@@ -7,6 +7,7 @@ import PostCategory from './post-category';
 import PostImage from './post-image';
 import PostMeta from './post-meta';
 import PostTitle from './post-title';
+import { IUser } from '@/interfaces/user.inteface';
 
 export default function PostFeatureItem({ data }: { data: IPosts }) {
   const [category, setCategory] = useState<ICategory>({} as ICategory);

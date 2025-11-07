@@ -19,10 +19,3 @@ export interface ICategory {
   created_at: Timestamp;
   status: number;
 }
-
-export interface IUser {
-  id: string;
-  fullname: string;
-  email: string;
-  password: string;
-}

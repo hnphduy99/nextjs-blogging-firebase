@@ -1,12 +1,13 @@
 'use client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { userRole, userStatus } from '@/constants/constants';
 import { auth, db } from '@/firebase/firebase-config';
 import { useToast } from '@/hooks/useToast';
 import { cn, slugify } from '@/lib/utils';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -40,13 +41,21 @@ export function SignUpForm({ className, ...props }: React.ComponentProps<'div'>)
     try {
       const user = await createUserWithEmailAndPassword(auth, values.email, values.password);
       if (user) {
-        await updateProfile(user.user, { displayName: values.fullname });
+        await updateProfile(user.user, {
+          displayName: values.fullname,
+          photoURL:
+            'https://res.cloudinary.com/dn2y3fyv8/image/upload/v1762482957/Screenshot_2025-11-07_093403_oe4lf7.png'
+        });
         await setDoc(doc(db, 'users', user.user.uid), {
-          uid: user.user.uid,
           fullname: values.fullname,
           email: values.email,
           password: values.password,
-          user_name: slugify(values.fullname)
+          user_name: slugify(values.fullname),
+          avatar:
+            'https://res.cloudinary.com/dn2y3fyv8/image/upload/v1762482957/Screenshot_2025-11-07_093403_oe4lf7.png',
+          status: userStatus.ACTIVE,
+          role: userRole.USER,
+          created_at: serverTimestamp()
         });
         success('Account created successfully.');
         router.push('/sign-in');
