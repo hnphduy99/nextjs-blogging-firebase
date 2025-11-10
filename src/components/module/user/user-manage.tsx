@@ -16,7 +16,8 @@ import Popconfirm from '@/components/ui/popconfirm';
 import { userRole, userStatus } from '@/constants/constants';
 import { db } from '@/firebase/firebase-config';
 import { IUser } from '@/interfaces/user.inteface';
-import { formatDateFirestore } from '@/lib/utils';
+import { extractPublicId, formatDateFirestore } from '@/lib/utils';
+import axios from 'axios';
 import {
   collection,
   deleteDoc,
@@ -54,9 +55,11 @@ export default function UserManage() {
     setPage(1);
   }, 500);
 
-  const handleDeleteUser = async (id: string) => {
-    const colRef = doc(db, 'users', id);
+  const handleDeleteUser = async (user: IUser) => {
+    const colRef = doc(db, 'users', user.id);
     await deleteDoc(colRef);
+    const publicId = extractPublicId(user.avatar);
+    await axios.delete(`/api/upload`, { data: { public_id: publicId } });
     getUsers();
   };
 
@@ -196,7 +199,7 @@ export default function UserManage() {
                       okText='Delete'
                       cancelText='Cancel'
                       okButtonVariant='destructive'
-                      onConfirm={() => handleDeleteUser(user.id)}
+                      onConfirm={() => handleDeleteUser(user)}
                     >
                       <Button variant='outline' size='icon'>
                         <Trash2 />
